@@ -1,25 +1,22 @@
 package org.rvslab.chapter2;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-@RestController
+@Controller
 public class HomeController {
-	@RequestMapping("/")
-	public Greet sayHello(){
-		return new Greet("Hello World!");
-	}
-}
-class Greet { 
-	private String message;
-	public Greet(String message) {
-		this.message = message;
-	}
-	public String getMessage() {
-		return message;
-	}
-	public void setMessage(String message) {
-		this.message = message;
-	}
-   
+    @GetMapping("/greeting")
+    public String greetingForm(Model model) {
+        model.addAttribute("greeting", new Greeting());
+        return "greeting";
+    }
+
+    @PostMapping("/greeting")
+    public @ResponseBody Greeting greetingSubmit(@ModelAttribute Greeting greeting) {
+    	return greeting;
+    }
 }
