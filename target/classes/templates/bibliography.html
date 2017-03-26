@@ -3,18 +3,21 @@
     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
-    <title>Getting Started: Handling Form Submission</title>
+    <title>Bibliographies home page</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 </head>
 <body>
-	<h1>Form</h1>
-    <form action="#" th:action="@{/greeting}" th:object="${greeting}" method="post">
+	<h1>Bibliography Manager</h1>
+    <form action="#" th:action="@{/}" th:object="${bibliography}" method="post">
     	<p>Author: <input type="text" th:field="*{author}" /></p>
     	<p>Title: <input type="text" th:field="*{title}" /></p>
     	<p>Year: <input type="text" th:field="*{year}" /></p>
         <p>Journal: <input type="text" th:field="*{journal}" /></p>
         <p><input type="submit" value="Submit" /> <input type="reset" value="Reset" /></p>
     </form>
+	<form action="#" th:action="@{/GetAllBibliographies}" method="get">
+		<input type="submit" value="getBibliographies" />
+	</form>
 </body>
 </html>

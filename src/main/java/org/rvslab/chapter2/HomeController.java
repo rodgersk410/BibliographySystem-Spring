@@ -1,5 +1,8 @@
 package org.rvslab.chapter2;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,14 +12,24 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class HomeController {
-    @GetMapping("/greeting")
-    public String greetingForm(Model model) {
-        model.addAttribute("greeting", new Greeting());
-        return "greeting";
+	
+	List bibliographyList = new ArrayList();
+	
+    @GetMapping("/")
+    public String bibliographyForm(Model model) {
+        model.addAttribute("bibliography", new Bibliography());
+        return "bibliography";
     }
 
-    @PostMapping("/greeting")
-    public @ResponseBody Greeting greetingSubmit(@ModelAttribute Greeting greeting) {
-    	return greeting;
+    @PostMapping("/")
+    public @ResponseBody List bibliographySubmit(@ModelAttribute Bibliography bibliography) {
+    	bibliographyList.add(bibliography);
+    	return bibliographyList;
     }
+    
+    @GetMapping("/GetAllBibliographies")
+    public @ResponseBody List getAllBibliographies(Model model) {
+        return bibliographyList;
+    }
+    
 }
