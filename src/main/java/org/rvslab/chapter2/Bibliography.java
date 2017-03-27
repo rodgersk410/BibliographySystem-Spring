@@ -1,11 +1,30 @@
 package org.rvslab.chapter2;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Bibliography {
 
     private String author;
     private String title;
     private int year;
     private String journal;
+    private final int id;
+    private static final AtomicInteger count = new AtomicInteger(0); 
+    
+    public Bibliography() {
+    	id = count.incrementAndGet();
+    }
+    public Bibliography(String author, String title, int year, String journal) {
+    	this.author = author;
+    	this.title = title;
+    	this.year = year;
+    	this.journal = journal;
+    	id = count.incrementAndGet();
+    }
+    
+    public int getId() {
+        return id;
+    }
 
     public String getAuthor() {
         return author;

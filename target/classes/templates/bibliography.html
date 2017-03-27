@@ -9,7 +9,7 @@
 </head>
 <body>
 	<h1>Bibliography Manager</h1>
-    <form action="#" th:action="@{/}" th:object="${bibliography}" method="post">
+    <form action="#" th:action="@{/AddBibliography}" th:object="${bibliography}" method="post">
     	<p>Author: <input type="text" th:field="*{author}" /></p>
     	<p>Title: <input type="text" th:field="*{title}" /></p>
     	<p>Year: <input type="text" th:field="*{year}" /></p>
@@ -19,5 +19,22 @@
 	<form action="#" th:action="@{/GetAllBibliographies}" method="get">
 		<input type="submit" value="getBibliographies" />
 	</form>
+	<table>
+		<tr>
+			<th>author</th>
+			<th>title</th>
+			<th>year</th>
+			<th>journal</th>
+		</tr>
+		<tr th:each="bibliography : ${bibliographyList}">
+			<td th:text="${bibliography.author}">author</td>
+			<td th:text="${bibliography.title}">title</td>
+			<td th:text="${bibliography.year}">year</td>
+			<td th:text="${bibliography.journal}">journal</td>
+			<td>
+				<a th:href="@{/DeleteBibliography/{id}(id=${bibliography.id})}"><span>Delet‌​e</span></a>
+			</td>
+		</tr>
+	</table>
 </body>
 </html>
