@@ -9,6 +9,7 @@
 </head>
 <body>
 	<h1>Bibliography Manager</h1>
+	<h3>Add a record</h3>
 	<form action="/addEntry">
 	  Author <input type="text" name="author"/><br/>
 	  Title <input type="text" name="title"/><br/>
@@ -16,6 +17,12 @@
 	  Journal <input type="text" name="journal"/><br/>
 	  <input type="submit" value="Add"/>
 	</form>
+	<h3>Upload Bibtex records</h3>
+	<form action="/uploadFile" method="post" enctype="multipart/form-data">
+		<input type="file" name="file" /><br/>
+		<input type="submit" value="Submit" />
+	</form>
+	<h3>Entries</h3>
 	<table>
 		<tr>
 			<th>id</th>
