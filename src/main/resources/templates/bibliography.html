@@ -9,16 +9,16 @@
 </head>
 <body>
 	<h1>Bibliography Manager</h1>
-    <form action="#" th:action="@{/AddBibliography}" th:object="${bibliography}" method="post">
-    	<p>Author: <input type="text" th:field="*{author}" /></p>
-    	<p>Title: <input type="text" th:field="*{title}" /></p>
-    	<p>Year: <input type="text" th:field="*{year}" /></p>
-        <p>Journal: <input type="text" th:field="*{journal}" /></p>
-        <p><input type="submit" value="Submit" /> <input type="reset" value="Reset" /></p>
-    </form>
-	<form action="#" th:action="@{/GetAllBibliographies}" method="get">
-		<input type="submit" value="getBibliographies" />
+	<form action="/addEntry">
+	  Author <input type="text" name="author"/><br/>
+	  Title <input type="text" name="title"/><br/>
+	  Year <input type="text" name="year"/><br/>
+	  Journal <input type="text" name="journal"/><br/>
+	  <input type="submit" value="Add"/>
 	</form>
+	<!--<form action="#" th:action="@{/GetAllBibliographies}" method="get">
+		<input type="submit" value="getBibliographies" />
+	</form> -->
 	<table>
 		<tr>
 			<th>author</th>
@@ -26,13 +26,14 @@
 			<th>year</th>
 			<th>journal</th>
 		</tr>
-		<tr th:each="bibliography : ${bibliographyList}">
+		<tr th:each="bibliography : ${entries}">
+			<td th:text="${bibliography.id}">id</td>
 			<td th:text="${bibliography.author}">author</td>
 			<td th:text="${bibliography.title}">title</td>
 			<td th:text="${bibliography.year}">year</td>
 			<td th:text="${bibliography.journal}">journal</td>
 			<td>
-				<a th:href="@{/DeleteBibliography/{id}(id=${bibliography.id})}"><span>Delet‌​e</span></a>
+				<a th:href="@{/deleteEntry/{id}(id=${bibliography.id})}"><span>Delet‌​e</span></a>
 			</td>
 		</tr>
 	</table>
