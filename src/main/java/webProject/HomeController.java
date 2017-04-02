@@ -1,4 +1,4 @@
-package org.rvslab.chapter2;
+package webProject;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

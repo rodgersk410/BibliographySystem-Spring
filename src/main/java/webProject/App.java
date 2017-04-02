@@ -1,4 +1,4 @@
-package org.rvslab.chapter2;
+package webProject;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

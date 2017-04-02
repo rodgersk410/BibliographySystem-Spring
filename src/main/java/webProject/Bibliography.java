@@ -1,4 +1,4 @@
-package org.rvslab.chapter2;
+package webProject;
 
 public class Bibliography {
 
