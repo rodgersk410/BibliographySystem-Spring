@@ -16,15 +16,14 @@
 	  Journal <input type="text" name="journal"/><br/>
 	  <input type="submit" value="Add"/>
 	</form>
-	<!--<form action="#" th:action="@{/GetAllBibliographies}" method="get">
-		<input type="submit" value="getBibliographies" />
-	</form> -->
 	<table>
 		<tr>
+			<th>id</th>
 			<th>author</th>
 			<th>title</th>
 			<th>year</th>
 			<th>journal</th>
+			<th>action</th>
 		</tr>
 		<tr th:each="bibliography : ${entries}">
 			<td th:text="${bibliography.id}">id</td>
@@ -32,6 +31,9 @@
 			<td th:text="${bibliography.title}">title</td>
 			<td th:text="${bibliography.year}">year</td>
 			<td th:text="${bibliography.journal}">journal</td>
+			<td>
+				<a th:href="@{/editEntry/{id}(id=${bibliography.id})}"><span>Edit</span></a>
+			</td>
 			<td>
 				<a th:href="@{/deleteEntry/{id}(id=${bibliography.id})}"><span>Delet‌​e</span></a>
 			</td>
