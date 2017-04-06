@@ -1,8 +1,16 @@
 package webProject;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.jbibtex.BibTeXDatabase;
+import org.jbibtex.BibTeXEntry;
+import org.jbibtex.BibTeXObject;
+import org.jbibtex.BibTeXParser;
+import org.jbibtex.ParseException;
+import org.jbibtex.TokenMgrException;
+import org.jbibtex.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -97,6 +112,54 @@ public class HomeController {
         if (file.isEmpty()) {
             System.out.println("file empty");
             redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
+        }
+        else {
+        	try {
+				InputStream inputStream =  new BufferedInputStream(file.getInputStream());
+				Reader reader = new InputStreamReader(inputStream);
+				BibTeXParser bibtexParser = new BibTeXParser();
+				BibTeXDatabase database = bibtexParser.parseFully(reader);
+				Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
+				Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
+				
+				for(BibTeXEntry entry : entries){					
+					Value title = entry.getField(BibTeXEntry.KEY_TITLE);
+					if(title == null){
+						continue;
+					}
+					Value author = entry.getField(BibTeXEntry.KEY_AUTHOR);
+					if(author == null){
+						continue;
+					}
+					Value year = entry.getField(BibTeXEntry.KEY_YEAR);
+					if(year == null){
+						continue;
+					}
+					Value journal = entry.getField(BibTeXEntry.KEY_JOURNAL);
+					if(journal == null){
+						continue;
+					}
+					
+					String stitle = title.toUserString();
+					String sauthor = author.toUserString();
+					Integer iyear = Integer.parseInt(year.toUserString());
+					String sjournal = journal.toUserString();
+					
+			        jdbcTemplate.update("insert into entries (author, title, year, journal) "
+			        		+ "values (?, ?, ?, ?)", sauthor, stitle, iyear, sjournal);
+				}
+							
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.out.println("file empty");
+			} catch (TokenMgrException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
         
         return "redirect:/biblio"; // back to the biblio view
