@@ -1,21 +1,32 @@
 package webProject;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.jbibtex.BibTeXDatabase;
@@ -26,6 +37,8 @@ import org.jbibtex.ParseException;
 import org.jbibtex.TokenMgrException;
 import org.jbibtex.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -164,6 +177,53 @@ public class HomeController {
         
         return "redirect:/biblio"; // back to the biblio view
     }
+    
+	// download entries
+	@RequestMapping(value = "/downloadEntries", method = RequestMethod.GET, produces = "application/bibtex")
+	@ResponseBody void downloadEntries(HttpServletResponse response, Model model) throws IOException {
+
+		List<Bibliography> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries",
+				new RowMapper<Bibliography>() {
+					public Bibliography mapRow(ResultSet rs, int rowNum) throws SQLException {
+						Bibliography entry = new Bibliography(rs.getInt("id"), rs.getString("author"),
+								rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
+						return entry;
+					}
+				});
+
+		StringBuffer sb = new StringBuffer();
+
+		for (Bibliography entry : entries) {
+			sb.append("@article{");
+			sb.append("\n");
+			sb.append("author = {" + entry.getAuthor() + "},");
+			sb.append("\n");
+			sb.append("title = {" + entry.getTitle() + "},");
+			sb.append("\n");
+			sb.append("year = {" + entry.getYear() + "},");
+			sb.append("\n");
+			sb.append("journal = {" + entry.getJournal() + "},");
+			sb.append("\n");
+			sb.append("}");
+			sb.append("\n");
+			sb.append("\n");
+		}
+
+		byte[] bytes = sb.toString().getBytes();
+		InputStream is = new ByteArrayInputStream(bytes);
+
+		response.setContentType("application/bibtex");
+		response.setHeader("Content-Disposition", "attachment; filename=" + "BibtexRecords.bib");
+		OutputStream os = response.getOutputStream();
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = is.read(buffer)) != -1) {
+			os.write(buffer, 0, len);
+		}
+		os.flush();
+		os.close();
+		is.close();
+	}
     
     @Autowired
 	JdbcTemplate jdbcTemplate;
