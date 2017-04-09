@@ -17,12 +17,15 @@
 	  Journal <input type="text" name="journal"/><br/>
 	  <input type="submit" value="Add"/>
 	</form>
-	<h3>Upload Bibtex records</h3>
+	<h3>Upload BibTeX entries</h3>
 	<form action="/uploadFile" method="post" enctype="multipart/form-data">
 		<input type="file" name="file" /><br/>
 		<input type="submit" value="Submit" />
 	</form>
 	<h3>Entries</h3>
+	<div>
+		<a th:href="@{/downloadEntries}"><span>Export all BibTeX entries</span></a>
+	</div>
 	<table>
 		<tr>
 			<th>id</th>
