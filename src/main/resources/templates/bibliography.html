@@ -4,6 +4,36 @@
     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <title>Bibliographies home page</title>
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+			function myFunction() {
+			  var input, filter, table, tr, td, i, matchCount;
+			  input = document.getElementById("myInput");
+			  filter = input.value.toUpperCase();
+			  table = document.getElementById("myTable");
+			  tr = table.getElementsByTagName("tr");
+			  numColumns = table.getElementsByTagName("tr")[0].getElementsByTagName("th").length - 1;
+			
+				for (i = 1; i < tr.length; i++) {
+					matchCount = 0;
+					for (j=0; j < numColumns; j++) {
+						td = tr[i].getElementsByTagName("td")[j];
+						if (td) {
+							if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+								matchCount = 1;
+							}
+						}
+					}
+					if(matchCount == 1) {
+						tr[i].style.display = "";
+					}
+					else {
+						tr[i].style.display = "none";
+					}
+				}
+			}
+		/*]]>*/
+	</script>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 </head>
@@ -26,7 +56,9 @@
 	<div>
 		<a th:href="@{/downloadEntries}"><span>Export all BibTeX entries</span></a>
 	</div>
-	<table>
+	<br/>
+	<input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for names.."/>
+	<table id="myTable">
 		<tr>
 			<th>id</th>
 			<th>author</th>
