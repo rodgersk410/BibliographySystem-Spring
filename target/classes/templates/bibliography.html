@@ -4,11 +4,20 @@
     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <title>Bibliographies home page</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script th:inline="javascript">
 		/*<![CDATA[*/
-			function myFunction() {
+		
+			$(document).ready(function () {
+				$('#selectAll').click(function(e){
+					var table= $('#myTable');
+					$('td input:checkbox',table).prop('checked',this.checked);
+				});
+			});
+			
+			function searchEntries() {
 			  var input, filter, table, tr, td, i, matchCount;
-			  input = document.getElementById("myInput");
+			  input = document.getElementById("searchInput");
 			  filter = input.value.toUpperCase();
 			  table = document.getElementById("myTable");
 			  tr = table.getElementsByTagName("tr");
@@ -53,33 +62,37 @@
 		<input type="submit" value="Submit" />
 	</form>
 	<h3>Entries</h3>
-	<div>
-		<a th:href="@{/downloadEntries}"><span>Export all BibTeX entries</span></a>
-	</div>
+	<input type="text" id="searchInput" onkeyup="searchEntries()" placeholder="Search for names.."/>
 	<br/>
-	<input type="text" id="myInput" onkeyup="myFunction()" placeholder="Search for names.."/>
-	<table id="myTable">
-		<tr>
-			<th>id</th>
-			<th>author</th>
-			<th>title</th>
-			<th>year</th>
-			<th>journal</th>
-			<th>action</th>
-		</tr>
-		<tr th:each="bibliography : ${entries}">
-			<td th:text="${bibliography.id}">id</td>
-			<td th:text="${bibliography.author}">author</td>
-			<td th:text="${bibliography.title}">title</td>
-			<td th:text="${bibliography.year}">year</td>
-			<td th:text="${bibliography.journal}">journal</td>
-			<td>
-				<a th:href="@{/editEntry/{id}(id=${bibliography.id})}"><span>Edit</span></a>
-			</td>
-			<td>
-				<a th:href="@{/deleteEntry/{id}(id=${bibliography.id})}"><span>Delet‌​e</span></a>
-			</td>
-		</tr>
-	</table>
+	<form action="/modifySelected">
+	    <input type="submit" th:name="action" value="Export Selected"/>
+	    <input type="submit" th:name="action" value="Delete Selected"/>
+		<table id="myTable">
+			<tr>
+				<th>id</th>
+				<th>author</th>
+				<th>title</th>
+				<th>year</th>
+				<th>journal</th>
+				<th>action</th>
+				<th>
+					<input type="checkbox" th:name="allCheck" th:id="selectAll" />
+				</th>
+			</tr>
+			<tr th:each="bibliography : ${entries}">
+				<td th:text="${bibliography.id}">id</td>
+				<td th:text="${bibliography.author}">author</td>
+				<td th:text="${bibliography.title}">title</td>
+				<td th:text="${bibliography.year}">year</td>
+				<td th:text="${bibliography.journal}">journal</td>
+				<td>
+					<a th:href="@{/editEntry/{id}(id=${bibliography.id})}"><span>Edit</span></a>
+				</td>
+				<td>
+					<input type="checkbox" th:id="myCheck" th:name="myCheck" th:value="${bibliography.id}"/>
+				</td>
+			</tr>
+		</table>
+	</form>
 </body>
 </html>

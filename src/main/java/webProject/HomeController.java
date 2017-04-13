@@ -214,6 +214,65 @@ public class HomeController {
 		os.close();
 		is.close();
 	}
+	
+    //export selected entry
+    @RequestMapping(value="/modifySelected", params="action=Export Selected")
+    @ResponseBody void exportSelected(HttpServletResponse response, @RequestParam(value="myCheck", required=true) String id,
+			@RequestParam(value="action", required=true) String action,
+			Model model) throws IOException {
+
+		List<Bibliography> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries"
+				+ " where id in (" + id + ")",
+				new RowMapper<Bibliography>() {
+					public Bibliography mapRow(ResultSet rs, int rowNum) throws SQLException {
+						Bibliography entry = new Bibliography(rs.getInt("id"), rs.getString("author"),
+								rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
+						return entry;
+					}
+				});
+
+		StringBuffer sb = new StringBuffer();
+
+		for (Bibliography entry : entries) {
+			sb.append("@article{");
+			sb.append("\n");
+			sb.append("author = {" + entry.getAuthor() + "},");
+			sb.append("\n");
+			sb.append("title = {" + entry.getTitle() + "},");
+			sb.append("\n");
+			sb.append("year = {" + entry.getYear() + "},");
+			sb.append("\n");
+			sb.append("journal = {" + entry.getJournal() + "},");
+			sb.append("\n");
+			sb.append("}");
+			sb.append("\n");
+			sb.append("\n");
+		}
+
+		byte[] bytes = sb.toString().getBytes();
+		InputStream is = new ByteArrayInputStream(bytes);
+
+		response.setContentType("application/bibtex");
+		response.setHeader("Content-Disposition", "attachment; filename=" + "BibtexRecords.bib");
+		OutputStream os = response.getOutputStream();
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = is.read(buffer)) != -1) {
+			os.write(buffer, 0, len);
+		}
+		os.flush();
+		os.close();
+		is.close();
+    }
+    
+    //delete selected entry
+    @RequestMapping(value="/modifySelected", params="action=Delete Selected")
+    public String deleteSelected(@RequestParam(value="myCheck", required=true) String id,
+    								@RequestParam(value="action", required=true) String action,
+    								Model model) {    	
+        jdbcTemplate.update("delete from bibliographies.entries where id in (" + id + ")");
+        return "redirect:biblio"; // back to the biblio view
+    }
     
     @Autowired
 	JdbcTemplate jdbcTemplate;
