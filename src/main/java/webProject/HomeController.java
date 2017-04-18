@@ -274,6 +274,29 @@ public class HomeController {
         return "redirect:biblio"; // back to the biblio view
     }
     
+    //view formatted selected entry
+    @RequestMapping(value="/modifySelected", params="action=View Selected in IEEE")
+    public String viewFormattedSelected(@RequestParam(value="myCheck", required=true) String id,
+    								@RequestParam(value="action", required=true) String action,
+    								Model model,
+    								RedirectAttributes redir) {    	
+
+		List<Bibliography> formattedEntries = this.jdbcTemplate.query("select id, author, title, year, journal from entries"
+				+ " where id in (" + id + ")",
+				new RowMapper<Bibliography>() {
+					public Bibliography mapRow(ResultSet rs, int rowNum) throws SQLException {
+						Bibliography entry = new Bibliography(rs.getInt("id"), rs.getString("author"),
+								rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
+						return entry;
+					}
+				});
+    	
+		//model.addAttribute("formattedEntries", formattedEntries);
+		redir.addFlashAttribute("formattedEntries",formattedEntries);
+		
+        return "redirect:biblio"; // back to the biblio view
+    }
+    
     @Autowired
 	JdbcTemplate jdbcTemplate;
     

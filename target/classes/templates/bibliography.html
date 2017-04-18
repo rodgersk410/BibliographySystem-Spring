@@ -67,6 +67,21 @@
 	<form action="/modifySelected">
 	    <input type="submit" th:name="action" value="Export Selected"/>
 	    <input type="submit" th:name="action" value="Delete Selected"/>
+	    <input type="submit" th:name="action" value="View Selected in IEEE"/>
+		<table id="myFormattedTable">
+			<tr>
+				<th>Formatted</th>
+			</tr>
+			<tr th:each="bibliography : ${formattedEntries}">
+				<td th:text="${#strings.substring(bibliography.author,0,1)} + '. ' + (${#strings.substringAfter(bibliography.author,' ')} ? ${#strings.substringAfter(bibliography.author,' ')} : '') + ', '"
+				>Formatted</td>
+				<td th:text="
+								'&quot;' + ${bibliography.title} + ',&quot; ' +
+								${bibliography.journal} + ', ' +
+								${bibliography.year} + '.'"
+				>Formatted</td>
+			</tr>
+		</table>
 		<table id="myTable">
 			<tr>
 				<th>id</th>
