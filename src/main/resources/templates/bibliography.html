@@ -61,6 +61,41 @@
 		<input type="file" name="file" /><br/>
 		<input type="submit" value="Submit" />
 	</form>
+	<h3>IEEE Xplore Search Gateway Records</h3>
+	<form action="/searchIeeeDb">
+	  Author <input type="text" name="author"/><br/>
+	  Title <input type="text" name="title"/><br/>
+	  Journal <input type="text" name="journal"/><br/>
+	  Year <input type="text" name="year"/><br/>
+	  <input type="submit" th:name="action" value="Search Ieee"/>
+	  <input type="submit" th:name="action" value="Import Selected"/>
+	  
+		<table id="myIeeeTable">
+			<tr>
+				<th>id</th>
+				<th>author</th>
+				<th>title</th>
+				<th>year</th>
+				<th>journal</th>
+				<th>action</th>
+				<th>
+					<input type="checkbox" th:name="allCheck" th:id="selectAll" />
+				</th>
+			</tr>
+			<tr th:each="bibliography : ${entries2}">
+				<td th:text="${bibliography.id}">id</td>
+				<td th:text="${bibliography.author}">author</td>
+				<td th:text="${bibliography.title}">title</td>
+				<td th:text="${bibliography.year}">year</td>
+				<td th:text="${bibliography.journal}">journal</td>
+				<td>
+					<input type="checkbox" th:id="myCheck" th:name="myCheck" th:value="${bibliography.id}"/>
+				</td>
+			</tr>
+		</table>
+	  
+	  
+	</form>
 	<h3>Entries</h3>
 	<input type="text" id="searchInput" onkeyup="searchEntries()" placeholder="Search for names.."/>
 	<br/>

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.jbibtex.BibTeXDatabase;
@@ -29,6 +30,7 @@ import org.jbibtex.ParseException;
 import org.jbibtex.TokenMgrException;
 import org.jbibtex.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -296,6 +298,46 @@ public class HomeController {
 		
         return "redirect:biblio"; // back to the biblio view
     }
+    
+    //search Ieee db
+    @RequestMapping(value="/searchIeeeDb", params="action=Search Ieee")
+    public String searchIeeeDb(@RequestParam(value="action", required=true) String action,
+						    		@RequestParam(value="author", required=false) String a,
+						            @RequestParam(value="title", required=false) String t,
+						            @RequestParam(value="journal", required=false) String j,
+						            @RequestParam(value="year", required=false) String y,
+    								Model model) {
+    	
+    	if(!a.equals("")) {
+    		a = "au=" + a;
+    	}
+    	
+    	if(!t.equals("")) {
+    		t = "&ti=" + t;
+    	}
+    	
+    	if(!j.equals("")) {
+    		j = "&jn=" + j;
+    	}
+    	
+    	if(!y.equals("")) {
+    		y = "&py=" + y;
+    	}
+    	
+        String url = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?" + a + t + j + y + "&hc=10";
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                url,
+                String.class);
+
+        System.out.println(response);
+        System.out.println(url);
+        
+        return "redirect:biblio"; // back to the biblio view
+    }
+    
+
     
     @Autowired
 	JdbcTemplate jdbcTemplate;
