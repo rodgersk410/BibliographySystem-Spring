@@ -7,12 +7,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,6 +31,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+
 import org.jbibtex.BibTeXDatabase;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.BibTeXParser;
@@ -300,13 +311,15 @@ public class HomeController {
     }
     
     //search Ieee db
+    List<Bibliography> IeeeEntries = new ArrayList<Bibliography>();
     @RequestMapping(value="/searchIeeeDb", params="action=Search Ieee")
     public String searchIeeeDb(@RequestParam(value="action", required=true) String action,
 						    		@RequestParam(value="author", required=false) String a,
 						            @RequestParam(value="title", required=false) String t,
 						            @RequestParam(value="journal", required=false) String j,
 						            @RequestParam(value="year", required=false) String y,
-    								Model model) {
+    								Model model,
+    								RedirectAttributes redir) {
     	
     	if(!a.equals("")) {
     		a = "au=" + a;
@@ -330,10 +343,54 @@ public class HomeController {
         ResponseEntity<String> response = restTemplate.getForEntity(
                 url,
                 String.class);
-
-        System.out.println(response);
-        System.out.println(url);
         
+        String s = response.getBody().toString();
+        
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+        DocumentBuilder builder;
+        try  
+        {  
+            builder = factory.newDocumentBuilder();  
+            Document xmlDocument = builder.parse( new InputSource( new StringReader( s ) ) );
+            
+            JAXBContext jaxbContext = JAXBContext.newInstance(Root.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            Root document = (Root) jaxbUnmarshaller.unmarshal(xmlDocument);
+
+            IeeeEntries = document.getBibliographies();
+            
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        }
+        
+        for(int i=0; i < 10; i++) {
+        	IeeeEntries.get(i).setSearchId(i+1);
+        }
+        
+		redir.addFlashAttribute("IeeeEntries", IeeeEntries);        
+        return "redirect:biblio"; // back to the biblio view
+    }
+    
+    //import Ieee records
+    @RequestMapping(value="/searchIeeeDb", params="action=Import Selected")
+    public String importIeeeSelected(@RequestParam(value="myCheck", required=true) String id,
+    								Model model) {
+    	
+    	System.out.println("author" + id);
+    	List<String> items = Arrays.asList(id.split("\\s*,\\s*"));
+    	List<Bibliography> selectedBiblioEntries = new ArrayList<Bibliography>();
+    	
+    	for(int i=0; i<items.size(); i++) {
+    		selectedBiblioEntries.add(IeeeEntries.get(Integer.parseInt(items.get(i))));
+    	}
+    	
+		for(Bibliography entry : selectedBiblioEntries){
+			
+	        jdbcTemplate.update("insert into entries (author, title, year, journal) "
+	        		+ "values (?, ?, ?, ?)", entry.getAuthor(), entry.getTitle(),
+	        		entry.getYear(), entry.getJournal());
+		}
+    			
         return "redirect:biblio"; // back to the biblio view
     }
     
