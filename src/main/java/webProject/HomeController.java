@@ -7,12 +7,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +28,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+
+import CitationFormatting.CitationStyle;
+import CitationFormatting.CitationStyleGenerator;
+import CitationFormatting.CitationStyleOutputFormat;
+
 import org.jbibtex.BibTeXDatabase;
 import org.jbibtex.BibTeXEntry;
 import org.jbibtex.BibTeXParser;
@@ -29,6 +45,7 @@ import org.jbibtex.ParseException;
 import org.jbibtex.TokenMgrException;
 import org.jbibtex.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -39,11 +56,11 @@ public class HomeController {
 	//homepage	
     @RequestMapping("/biblio")
     public String getHomepage(Model model) {
-        List<Bibliography> entries = this.jdbcTemplate.query(
+        List<BibE> entries = this.jdbcTemplate.query(
         "select id, author, title, year, journal from entries",
-        new RowMapper<Bibliography>() {
-            public Bibliography mapRow(ResultSet rs, int rowNum) throws SQLException {
-            	Bibliography entry = new Bibliography(rs.getInt("id"),
+        new RowMapper<BibE>() {
+            public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
+            	BibE entry = new BibE(rs.getInt("id"),
             							rs.getString("author"),
                                         rs.getString("title"),
                                         rs.getInt("year"),
@@ -79,11 +96,11 @@ public class HomeController {
     //edit entry
     @RequestMapping("/editEntry/{id}")
     public String greeting(Model model, @PathVariable(value="id", required=false) int id) {
-        List<Bibliography> entries = this.jdbcTemplate.query(
+        List<BibE> entries = this.jdbcTemplate.query(
         "select id, author, title, year, journal from entries where id = " + id,
-        new RowMapper<Bibliography>() {
-            public Bibliography mapRow(ResultSet rs, int rowNum) throws SQLException {
-            	Bibliography entry = new Bibliography(rs.getInt("id"),
+        new RowMapper<BibE>() {
+            public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
+            	BibE entry = new BibE(rs.getInt("id"),
             							rs.getString("author"),
                                         rs.getString("title"),
                                         rs.getInt("year"),
@@ -168,36 +185,12 @@ public class HomeController {
         return "redirect:/biblio"; // back to the biblio view
     }
     
-	// download entries
+	// export all entries
 	@RequestMapping(value = "/downloadEntries", method = RequestMethod.GET, produces = "application/bibtex")
 	@ResponseBody void downloadEntries(HttpServletResponse response, Model model) throws IOException {
 
-		List<Bibliography> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries",
-				new RowMapper<Bibliography>() {
-					public Bibliography mapRow(ResultSet rs, int rowNum) throws SQLException {
-						Bibliography entry = new Bibliography(rs.getInt("id"), rs.getString("author"),
-								rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
-						return entry;
-					}
-				});
-
-		StringBuffer sb = new StringBuffer();
-
-		for (Bibliography entry : entries) {
-			sb.append("@article{");
-			sb.append("\n");
-			sb.append("author = {" + entry.getAuthor() + "},");
-			sb.append("\n");
-			sb.append("title = {" + entry.getTitle() + "},");
-			sb.append("\n");
-			sb.append("year = {" + entry.getYear() + "},");
-			sb.append("\n");
-			sb.append("journal = {" + entry.getJournal() + "},");
-			sb.append("\n");
-			sb.append("}");
-			sb.append("\n");
-			sb.append("\n");
-		}
+		List<BibE> entries = getAllEntries();
+		StringBuffer sb = entryToString(entries);
 
 		byte[] bytes = sb.toString().getBytes();
 		InputStream is = new ByteArrayInputStream(bytes);
@@ -214,6 +207,211 @@ public class HomeController {
 		os.close();
 		is.close();
 	}
+	
+    //export selected entry
+    @RequestMapping(value="/modifySelected", params="action=Export Selected")
+    @ResponseBody void exportSelected(HttpServletResponse response, @RequestParam(value="myCheck", required=true) String id,
+			@RequestParam(value="action", required=true) String action,
+			Model model) throws IOException {
+
+    	List<BibE> entries = getSelectedEntries(id);
+		StringBuffer sb = entryToString(entries);
+
+		byte[] bytes = sb.toString().getBytes();
+		InputStream is = new ByteArrayInputStream(bytes);
+
+		response.setContentType("application/bibtex");
+		response.setHeader("Content-Disposition", "attachment; filename=" + "BibtexRecords.bib");
+		OutputStream os = response.getOutputStream();
+		byte[] buffer = new byte[1024];
+		int len;
+		while ((len = is.read(buffer)) != -1) {
+			os.write(buffer, 0, len);
+		}
+		os.flush();
+		os.close();
+		is.close();
+    }
+    
+    //delete selected entry
+    @RequestMapping(value="/modifySelected", params="action=Delete Selected")
+    public String deleteSelected(@RequestParam(value="myCheck", required=true) String id,
+    								@RequestParam(value="action", required=true) String action,
+    								Model model) {    	
+        jdbcTemplate.update("delete from bibliographies.entries where id in (" + id + ")");
+        return "redirect:biblio"; // back to the biblio view
+    }
+    
+    //view formatted selected entry
+    @RequestMapping(value="/modifySelected", params="action=View Selected in IEEE")
+    public String viewFormattedSelected(@RequestParam(value="myCheck", required=true) String id,
+    								@RequestParam(value="action", required=true) String action,
+    								Model model,
+    								RedirectAttributes redir) {
+
+		List<BibE> formattedEntries = getSelectedEntries(id);
+		String ieeeStyleFile = "ieee.csl";
+		
+		StringBuffer sb = entryToString(formattedEntries);
+
+		byte[] bytes = sb.toString().getBytes();
+		InputStream is = new ByteArrayInputStream(bytes);
+		
+		Reader reader = new InputStreamReader(is);
+		BibTeXParser bibtexParser = null;
+		try {
+			bibtexParser = new BibTeXParser();
+		} catch (TokenMgrException | ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		BibTeXDatabase database = bibtexParser.parseFully(reader);
+		Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
+		Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
+		
+		
+		//CitationStyle cs = CitationStyle.createCitationStyleFromFile(ieeeStyleFile);
+		//CitationStyleOutputFormat coFormat = new CitationStyleOutputFormat(TEXT("text", ""));
+		List<String> co = CitationStyleGenerator.generateCitations(formattedEntries, ieeeStyleFile, CitationStyleOutputFormat.TEXT);
+		
+		for(String s : co) {
+			System.out.println(s);
+		}
+		
+		redir.addFlashAttribute("formattedEntries",formattedEntries);		
+        return "redirect:biblio"; // back to the biblio view
+    }
+    
+    //search Ieee db
+    List<BibE> IeeeEntries = new ArrayList<BibE>();
+    @RequestMapping(value="/searchIeeeDb", params="action=Search Ieee")
+    public String searchIeeeDb(@RequestParam(value="action", required=true) String action,
+						    		@RequestParam(value="author", required=false) String a,
+						            @RequestParam(value="title", required=false) String t,
+						            @RequestParam(value="journal", required=false) String j,
+						            @RequestParam(value="year", required=false) String y,
+    								Model model,
+    								RedirectAttributes redir) {
+    	
+    	if(!a.equals("")) {
+    		a = "au=" + a;
+    	}
+    	
+    	if(!t.equals("")) {
+    		t = "&ti=" + t;
+    	}
+    	
+    	if(!j.equals("")) {
+    		j = "&jn=" + j;
+    	}
+    	
+    	if(!y.equals("")) {
+    		y = "&py=" + y;
+    	}
+    	
+        String url = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?" + a + t + j + y + "&hc=10";
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                url,
+                String.class);
+        
+        String s = response.getBody().toString();
+        
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+        DocumentBuilder builder;
+        try  
+        {  
+            builder = factory.newDocumentBuilder();  
+            Document xmlDocument = builder.parse( new InputSource( new StringReader( s ) ) );
+            
+            JAXBContext jaxbContext = JAXBContext.newInstance(Root.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            Root document = (Root) jaxbUnmarshaller.unmarshal(xmlDocument);
+
+            IeeeEntries = document.getBibliographies();
+            
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        }
+        
+        for(int i=0; i < 10; i++) {
+        	IeeeEntries.get(i).setSearchId(i+1);
+        }
+        
+		redir.addFlashAttribute("IeeeEntries", IeeeEntries);        
+        return "redirect:biblio"; // back to the biblio view
+    }
+    
+    //import Ieee records
+    @RequestMapping(value="/searchIeeeDb", params="action=Import Selected")
+    public String importIeeeSelected(@RequestParam(value="myCheck", required=true) String id,
+    								Model model) {
+    	
+    	System.out.println("author" + id);
+    	List<String> items = Arrays.asList(id.split("\\s*,\\s*"));
+    	List<BibE> selectedBiblioEntries = new ArrayList<BibE>();
+    	
+    	for(int i=0; i<items.size(); i++) {
+    		selectedBiblioEntries.add(IeeeEntries.get(Integer.parseInt(items.get(i))));
+    	}
+    	
+		for(BibE entry : selectedBiblioEntries){
+			
+	        jdbcTemplate.update("insert into entries (author, title, year, journal) "
+	        		+ "values (?, ?, ?, ?)", entry.getAuthor(), entry.getTitle(),
+	        		entry.getYear(), entry.getJournal());
+		}
+    			
+        return "redirect:biblio"; // back to the biblio view
+    }
+    
+    public List<BibE> getSelectedEntries(String id) {
+		List<BibE> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries"
+				+ " where id in (" + id + ")",
+				new RowMapper<BibE>() {
+					public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
+						BibE entry = new BibE(rs.getInt("id"), rs.getString("author"),
+								rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
+						return entry;
+					}
+				});
+		return entries;
+    }
+    
+    public List<BibE> getAllEntries() {
+	List<BibE> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries",
+			new RowMapper<BibE>() {
+				public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
+					BibE entry = new BibE(rs.getInt("id"), rs.getString("author"),
+							rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
+					return entry;
+				}
+			});
+		return entries;
+	}
+    
+    public StringBuffer entryToString(List<BibE> entries) {
+		StringBuffer sb = new StringBuffer();
+
+		for (BibE entry : entries) {
+			sb.append("@article{");
+			sb.append("\n");
+			sb.append("author = {" + entry.getAuthor() + "},");
+			sb.append("\n");
+			sb.append("title = {" + entry.getTitle() + "},");
+			sb.append("\n");
+			sb.append("year = {" + entry.getYear() + "},");
+			sb.append("\n");
+			sb.append("journal = {" + entry.getJournal() + "},");
+			sb.append("\n");
+			sb.append("}");
+			sb.append("\n");
+			sb.append("\n");
+		}
+		
+		return sb;
+    }
     
     @Autowired
 	JdbcTemplate jdbcTemplate;
