@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -16,10 +15,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,13 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
-import CitationFormatting.CitationStyle;
 import CitationFormatting.CitationStyleGenerator;
 import CitationFormatting.CitationStyleOutputFormat;
 
@@ -45,7 +36,6 @@ import org.jbibtex.ParseException;
 import org.jbibtex.TokenMgrException;
 import org.jbibtex.Value;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -190,7 +180,10 @@ public class HomeController {
 	@ResponseBody void downloadEntries(HttpServletResponse response, Model model) throws IOException {
 
 		List<BibE> entries = getAllEntries();
-		StringBuffer sb = entryToString(entries);
+		StringBuffer sb = new StringBuffer();
+		for(BibE entry : entries){
+			sb = sb.append(entry.entryToString());
+		}
 
 		byte[] bytes = sb.toString().getBytes();
 		InputStream is = new ByteArrayInputStream(bytes);
@@ -215,7 +208,12 @@ public class HomeController {
 			Model model) throws IOException {
 
     	List<BibE> entries = getSelectedEntries(id);
-		StringBuffer sb = entryToString(entries);
+		StringBuffer sb = new StringBuffer();
+		for(BibE entry : entries){
+			sb = sb.append(entry.entryToString());
+		}
+		
+		System.out.println(sb.toString());
 
 		byte[] bytes = sb.toString().getBytes();
 		InputStream is = new ByteArrayInputStream(bytes);
@@ -252,11 +250,14 @@ public class HomeController {
 		List<BibE> formattedEntries = getSelectedEntries(id);
 		String ieeeStyleFile = "ieee.csl";
 		
-		StringBuffer sb = entryToString(formattedEntries);
-
+		StringBuffer sb = new StringBuffer();
+		for(BibE entry : formattedEntries){
+			sb = sb.append(entry.entryToString());
+		}
+		
+		//StringBuffer sb = formattedEntries.entryToString(formattedEntries);
 		byte[] bytes = sb.toString().getBytes();
 		InputStream is = new ByteArrayInputStream(bytes);
-		
 		Reader reader = new InputStreamReader(is);
 		BibTeXParser bibtexParser = null;
 		try {
@@ -269,9 +270,6 @@ public class HomeController {
 		Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
 		Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
 		
-		
-		//CitationStyle cs = CitationStyle.createCitationStyleFromFile(ieeeStyleFile);
-		//CitationStyleOutputFormat coFormat = new CitationStyleOutputFormat(TEXT("text", ""));
 		List<String> co = CitationStyleGenerator.generateCitations(formattedEntries, ieeeStyleFile, CitationStyleOutputFormat.TEXT);
 		
 		for(String s : co) {
@@ -283,7 +281,7 @@ public class HomeController {
     }
     
     //search Ieee db
-    List<BibE> IeeeEntries = new ArrayList<BibE>();
+    List<BibE> searchEntries = new ArrayList<BibE>();
     @RequestMapping(value="/searchIeeeDb", params="action=Search Ieee")
     public String searchIeeeDb(@RequestParam(value="action", required=true) String action,
 						    		@RequestParam(value="author", required=false) String a,
@@ -293,53 +291,10 @@ public class HomeController {
     								Model model,
     								RedirectAttributes redir) {
     	
-    	if(!a.equals("")) {
-    		a = "au=" + a;
-    	}
-    	
-    	if(!t.equals("")) {
-    		t = "&ti=" + t;
-    	}
-    	
-    	if(!j.equals("")) {
-    		j = "&jn=" + j;
-    	}
-    	
-    	if(!y.equals("")) {
-    		y = "&py=" + y;
-    	}
-    	
-        String url = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?" + a + t + j + y + "&hc=10";
-
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response = restTemplate.getForEntity(
-                url,
-                String.class);
+    	IeeeEntries ieEntries = new IeeeEntries();
+    	searchEntries = ieEntries.retrieveIeeeEntries(a, t, j, y);
         
-        String s = response.getBody().toString();
-        
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
-        DocumentBuilder builder;
-        try  
-        {  
-            builder = factory.newDocumentBuilder();  
-            Document xmlDocument = builder.parse( new InputSource( new StringReader( s ) ) );
-            
-            JAXBContext jaxbContext = JAXBContext.newInstance(Root.class);
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            Root document = (Root) jaxbUnmarshaller.unmarshal(xmlDocument);
-
-            IeeeEntries = document.getBibliographies();
-            
-        } catch (Exception e) {  
-            e.printStackTrace();  
-        }
-        
-        for(int i=0; i < 10; i++) {
-        	IeeeEntries.get(i).setSearchId(i+1);
-        }
-        
-		redir.addFlashAttribute("IeeeEntries", IeeeEntries);        
+		redir.addFlashAttribute("IeeeEntries", searchEntries);        
         return "redirect:biblio"; // back to the biblio view
     }
     
@@ -348,12 +303,14 @@ public class HomeController {
     public String importIeeeSelected(@RequestParam(value="myCheck", required=true) String id,
     								Model model) {
     	
-    	System.out.println("author" + id);
     	List<String> items = Arrays.asList(id.split("\\s*,\\s*"));
     	List<BibE> selectedBiblioEntries = new ArrayList<BibE>();
     	
+    	
+    	//List<BibE> IeeeEntries = new ArrayList<BibE>();
+    	//IeeeEntries.ge
     	for(int i=0; i<items.size(); i++) {
-    		selectedBiblioEntries.add(IeeeEntries.get(Integer.parseInt(items.get(i))));
+    		selectedBiblioEntries.add(searchEntries.get(Integer.parseInt(items.get(i))));
     	}
     	
 		for(BibE entry : selectedBiblioEntries){
@@ -390,28 +347,6 @@ public class HomeController {
 			});
 		return entries;
 	}
-    
-    public StringBuffer entryToString(List<BibE> entries) {
-		StringBuffer sb = new StringBuffer();
-
-		for (BibE entry : entries) {
-			sb.append("@article{");
-			sb.append("\n");
-			sb.append("author = {" + entry.getAuthor() + "},");
-			sb.append("\n");
-			sb.append("title = {" + entry.getTitle() + "},");
-			sb.append("\n");
-			sb.append("year = {" + entry.getYear() + "},");
-			sb.append("\n");
-			sb.append("journal = {" + entry.getJournal() + "},");
-			sb.append("\n");
-			sb.append("}");
-			sb.append("\n");
-			sb.append("\n");
-		}
-		
-		return sb;
-    }
     
     @Autowired
 	JdbcTemplate jdbcTemplate;
