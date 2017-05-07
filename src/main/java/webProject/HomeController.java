@@ -131,34 +131,11 @@ public class HomeController {
 
     	List<BibE> formattedEntries = dbhelper.getSelectedEntries(id);
 		String ieeeStyleFile = "ieee.csl";
+		List<String> iEeeFormattedEntries = CitationStyleGenerator.generateCitations(formattedEntries, 
+				ieeeStyleFile, CitationStyleOutputFormat.TEXT);
+		//TODO: needs refactoring so that the index number on the entry is in ascending order
 		
-		StringBuffer sb = new StringBuffer();
-		for(BibE entry : formattedEntries){
-			sb = sb.append(entry.entryToString());
-		}
-		
-		//StringBuffer sb = formattedEntries.entryToString(formattedEntries);
-		byte[] bytes = sb.toString().getBytes();
-		InputStream is = new ByteArrayInputStream(bytes);
-		Reader reader = new InputStreamReader(is);
-		BibTeXParser bibtexParser = null;
-		try {
-			bibtexParser = new BibTeXParser();
-		} catch (TokenMgrException | ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		BibTeXDatabase database = bibtexParser.parseFully(reader);
-		Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
-		Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
-		
-		List<String> co = CitationStyleGenerator.generateCitations(formattedEntries, ieeeStyleFile, CitationStyleOutputFormat.TEXT);
-		
-		for(String s : co) {
-			System.out.println(s);
-		}
-		
-		redir.addFlashAttribute("formattedEntries",formattedEntries);		
+		redir.addFlashAttribute("formattedEntries", iEeeFormattedEntries);
         return "redirect:biblio"; // back to the biblio view
     }
     
