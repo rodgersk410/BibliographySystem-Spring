@@ -5,13 +5,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DatabaseHelper {
 	
-    public List<BibE> getSelectedEntries(String id) {
+	public List<BibE> getSelectedEntries(String id) {
 		List<BibE> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries"
 				+ " where id in (" + id + ")",
 				new RowMapper<BibE>() {

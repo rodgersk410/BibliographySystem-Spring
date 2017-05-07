@@ -1,65 +1,49 @@
 package webProject;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.mysql.jdbc.PreparedStatement;
-
 import CitationFormatting.CitationStyleGenerator;
 import CitationFormatting.CitationStyleOutputFormat;
 
 import org.jbibtex.BibTeXDatabase;
-import org.jbibtex.BibTeXEntry;
 import org.jbibtex.BibTeXParser;
 import org.jbibtex.ParseException;
 import org.jbibtex.TokenMgrException;
-import org.jbibtex.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 
 
 @Controller
 public class HomeController {
 	
+	@Autowired
+	private DatabaseHelper dbhelper;
+	
 	//homepage	
     @RequestMapping("/biblio")
     public String getHomepage(Model model) {
-    	List<BibE> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries",
-    			new RowMapper<BibE>() {
-    				public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
-    					BibE entry = new BibE(rs.getInt("id"), rs.getString("author"),
-    							rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
-    					return entry;
-    				}
-    			});
-    		/*return entries;*/
-		DatabaseHelper dbhelper = new DatabaseHelper();
-		//fix this: List<BibE> entries2 = dbhelper.getAllEntries();
+		List<BibE> entries = dbhelper.getAllEntries();
         model.addAttribute("entries", entries);
         return "bibliography";
     }
@@ -85,9 +69,8 @@ public class HomeController {
     
     //edit entry
     @RequestMapping("/editEntry/{id}")
-    public String greeting(Model model, @PathVariable(value="id", required=false) int id) {
-		DatabaseHelper dbhelper = new DatabaseHelper();
-		List<BibE> entries = dbhelper.getAllEntries();
+    public String greeting(Model model, @PathVariable(value="id", required=false) String id) {
+		List<BibE> entries = dbhelper.getSelectedEntries(id);
         model.addAttribute("entry", entries.get(0));
         return "editEntry";
     }
@@ -125,29 +108,9 @@ public class HomeController {
 			@RequestParam(value="action", required=true) String action,
 			Model model) throws IOException {
 
-		DatabaseHelper dbhelper = new DatabaseHelper();
     	List<BibE> entries = dbhelper.getSelectedEntries(id);
-		StringBuffer sb = new StringBuffer();
-		for(BibE entry : entries){
-			sb = sb.append(entry.entryToString());
-		}
-		
-		System.out.println(sb.toString());
-
-		byte[] bytes = sb.toString().getBytes();
-		InputStream is = new ByteArrayInputStream(bytes);
-
-		response.setContentType("application/bibtex");
-		response.setHeader("Content-Disposition", "attachment; filename=" + "BibtexRecords.bib");
-		OutputStream os = response.getOutputStream();
-		byte[] buffer = new byte[1024];
-		int len;
-		while ((len = is.read(buffer)) != -1) {
-			os.write(buffer, 0, len);
-		}
-		os.flush();
-		os.close();
-		is.close();
+    	BibEntryExporter exporter = new BibEntryExporter();
+    	exporter.exportToFile(response, entries);
     }
     
     //delete selected entry
@@ -166,7 +129,6 @@ public class HomeController {
     								Model model,
     								RedirectAttributes redir) {
 
-		DatabaseHelper dbhelper = new DatabaseHelper();
     	List<BibE> formattedEntries = dbhelper.getSelectedEntries(id);
 		String ieeeStyleFile = "ieee.csl";
 		
