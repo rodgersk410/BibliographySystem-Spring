@@ -119,22 +119,19 @@ public class BibE {
     
     public StringBuffer entryToString() {
 		StringBuffer sb = new StringBuffer();
-
-	//	for (BibE entry : entries) {
-			sb.append("@article{");
-			sb.append("\n");
-			sb.append("author = {" + this.getAuthor() + "},");
-			sb.append("\n");
-			sb.append("title = {" + this.getTitle() + "},");
-			sb.append("\n");
-			sb.append("year = {" + this.getYear() + "},");
-			sb.append("\n");
-			sb.append("journal = {" + this.getJournal() + "},");
-			sb.append("\n");
-			sb.append("}");
-			sb.append("\n");
-			sb.append("\n");
-	//	}
+		sb.append("@article{");
+		sb.append("\n");
+		sb.append("author = {" + this.getAuthor() + "},");
+		sb.append("\n");
+		sb.append("title = {" + this.getTitle() + "},");
+		sb.append("\n");
+		sb.append("year = {" + this.getYear() + "},");
+		sb.append("\n");
+		sb.append("journal = {" + this.getJournal() + "},");
+		sb.append("\n");
+		sb.append("}");
+		sb.append("\n");
+		sb.append("\n");
 		
 		return sb;
     }

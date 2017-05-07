@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.mysql.jdbc.PreparedStatement;
 
 import CitationFormatting.CitationStyleGenerator;
 import CitationFormatting.CitationStyleOutputFormat;
@@ -46,19 +49,17 @@ public class HomeController {
 	//homepage	
     @RequestMapping("/biblio")
     public String getHomepage(Model model) {
-        List<BibE> entries = this.jdbcTemplate.query(
-        "select id, author, title, year, journal from entries",
-        new RowMapper<BibE>() {
-            public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
-            	BibE entry = new BibE(rs.getInt("id"),
-            							rs.getString("author"),
-                                        rs.getString("title"),
-                                        rs.getInt("year"),
-                                        rs.getString("journal")
-                                        );
-                return entry;
-            }
-        });
+    	List<BibE> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries",
+    			new RowMapper<BibE>() {
+    				public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
+    					BibE entry = new BibE(rs.getInt("id"), rs.getString("author"),
+    							rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
+    					return entry;
+    				}
+    			});
+    		/*return entries;*/
+		DatabaseHelper dbhelper = new DatabaseHelper();
+		//fix this: List<BibE> entries2 = dbhelper.getAllEntries();
         model.addAttribute("entries", entries);
         return "bibliography";
     }
@@ -72,13 +73,12 @@ public class HomeController {
             Model model) {
         jdbcTemplate.update("insert into entries (author, title, year, journal) "
         		+ "values (?, ?, ?, ?)", a, t, y, j);
-        return "redirect:biblio"; // back to the biblio view
+        return "redirect:biblio";
     }
     
     //delete entry
     @RequestMapping("/deleteEntry/{id}")
-    public String deleteEntry(@PathVariable(value="id", required=false) int id,
-            Model model) {
+    public String deleteEntry(@PathVariable(value="id", required=false) int id, Model model) {
         jdbcTemplate.update("delete from entries where id = ?", id);
         return "redirect:/biblio";
     }
@@ -86,24 +86,13 @@ public class HomeController {
     //edit entry
     @RequestMapping("/editEntry/{id}")
     public String greeting(Model model, @PathVariable(value="id", required=false) int id) {
-        List<BibE> entries = this.jdbcTemplate.query(
-        "select id, author, title, year, journal from entries where id = " + id,
-        new RowMapper<BibE>() {
-            public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
-            	BibE entry = new BibE(rs.getInt("id"),
-            							rs.getString("author"),
-                                        rs.getString("title"),
-                                        rs.getInt("year"),
-                                        rs.getString("journal")
-                                        );
-                return entry;
-            }
-        });
+		DatabaseHelper dbhelper = new DatabaseHelper();
+		List<BibE> entries = dbhelper.getAllEntries();
         model.addAttribute("entry", entries.get(0));
         return "editEntry";
     }
 
-    //save an edited entry
+    //save edited entry
     @RequestMapping("/saveEntry/{id}")
     public String saveEntry(@RequestParam(value="author", required=true) String a,
             @RequestParam(value="title", required=true) String t,
@@ -119,87 +108,16 @@ public class HomeController {
     //import bibtex files
     @RequestMapping(value = "/uploadFile")
     public String uploadFile(@RequestParam("file") MultipartFile file, Model model, RedirectAttributes redirectAttributes) {
-        if (file.isEmpty()) {
-            System.out.println("file empty");
-            redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
-        }
-        else {
-        	try {
-				InputStream inputStream =  new BufferedInputStream(file.getInputStream());
-				Reader reader = new InputStreamReader(inputStream);
-				BibTeXParser bibtexParser = new BibTeXParser();
-				BibTeXDatabase database = bibtexParser.parseFully(reader);
-				Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
-				Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
-				
-				for(BibTeXEntry entry : entries){					
-					Value title = entry.getField(BibTeXEntry.KEY_TITLE);
-					if(title == null){
-						continue;
-					}
-					Value author = entry.getField(BibTeXEntry.KEY_AUTHOR);
-					if(author == null){
-						continue;
-					}
-					Value year = entry.getField(BibTeXEntry.KEY_YEAR);
-					if(year == null){
-						continue;
-					}
-					Value journal = entry.getField(BibTeXEntry.KEY_JOURNAL);
-					if(journal == null){
-						continue;
-					}
-					
-					String stitle = title.toUserString();
-					String sauthor = author.toUserString();
-					Integer iyear = Integer.parseInt(year.toUserString());
-					String sjournal = journal.toUserString();
-					
-			        jdbcTemplate.update("insert into entries (author, title, year, journal) "
-			        		+ "values (?, ?, ?, ?)", sauthor, stitle, iyear, sjournal);
-				}
-							
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				System.out.println("file empty");
-			} catch (TokenMgrException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
-        
+    	BibEntryImporter importer = new BibEntryImporter();
+    	List<BibE> beList = importer.entryImporter(file);
+    	
+    	for(BibE entry : beList) {
+    		jdbcTemplate.update("insert into entries (author, title, year, journal) "
+    				+ "values (?, ?, ?, ?)", entry.getAuthor(), entry.getTitle(), entry.getYear(), entry.getJournal());
+    	}    	
+    	
         return "redirect:/biblio"; // back to the biblio view
     }
-    
-	// export all entries
-	@RequestMapping(value = "/downloadEntries", method = RequestMethod.GET, produces = "application/bibtex")
-	@ResponseBody void downloadEntries(HttpServletResponse response, Model model) throws IOException {
-
-		List<BibE> entries = getAllEntries();
-		StringBuffer sb = new StringBuffer();
-		for(BibE entry : entries){
-			sb = sb.append(entry.entryToString());
-		}
-
-		byte[] bytes = sb.toString().getBytes();
-		InputStream is = new ByteArrayInputStream(bytes);
-
-		response.setContentType("application/bibtex");
-		response.setHeader("Content-Disposition", "attachment; filename=" + "BibtexRecords.bib");
-		OutputStream os = response.getOutputStream();
-		byte[] buffer = new byte[1024];
-		int len;
-		while ((len = is.read(buffer)) != -1) {
-			os.write(buffer, 0, len);
-		}
-		os.flush();
-		os.close();
-		is.close();
-	}
 	
     //export selected entry
     @RequestMapping(value="/modifySelected", params="action=Export Selected")
@@ -207,7 +125,8 @@ public class HomeController {
 			@RequestParam(value="action", required=true) String action,
 			Model model) throws IOException {
 
-    	List<BibE> entries = getSelectedEntries(id);
+		DatabaseHelper dbhelper = new DatabaseHelper();
+    	List<BibE> entries = dbhelper.getSelectedEntries(id);
 		StringBuffer sb = new StringBuffer();
 		for(BibE entry : entries){
 			sb = sb.append(entry.entryToString());
@@ -247,7 +166,8 @@ public class HomeController {
     								Model model,
     								RedirectAttributes redir) {
 
-		List<BibE> formattedEntries = getSelectedEntries(id);
+		DatabaseHelper dbhelper = new DatabaseHelper();
+    	List<BibE> formattedEntries = dbhelper.getSelectedEntries(id);
 		String ieeeStyleFile = "ieee.csl";
 		
 		StringBuffer sb = new StringBuffer();
@@ -306,15 +226,11 @@ public class HomeController {
     	List<String> items = Arrays.asList(id.split("\\s*,\\s*"));
     	List<BibE> selectedBiblioEntries = new ArrayList<BibE>();
     	
-    	
-    	//List<BibE> IeeeEntries = new ArrayList<BibE>();
-    	//IeeeEntries.ge
     	for(int i=0; i<items.size(); i++) {
     		selectedBiblioEntries.add(searchEntries.get(Integer.parseInt(items.get(i))));
     	}
     	
 		for(BibE entry : selectedBiblioEntries){
-			
 	        jdbcTemplate.update("insert into entries (author, title, year, journal) "
 	        		+ "values (?, ?, ?, ?)", entry.getAuthor(), entry.getTitle(),
 	        		entry.getYear(), entry.getJournal());
@@ -322,31 +238,6 @@ public class HomeController {
     			
         return "redirect:biblio"; // back to the biblio view
     }
-    
-    public List<BibE> getSelectedEntries(String id) {
-		List<BibE> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries"
-				+ " where id in (" + id + ")",
-				new RowMapper<BibE>() {
-					public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
-						BibE entry = new BibE(rs.getInt("id"), rs.getString("author"),
-								rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
-						return entry;
-					}
-				});
-		return entries;
-    }
-    
-    public List<BibE> getAllEntries() {
-	List<BibE> entries = this.jdbcTemplate.query("select id, author, title, year, journal from entries",
-			new RowMapper<BibE>() {
-				public BibE mapRow(ResultSet rs, int rowNum) throws SQLException {
-					BibE entry = new BibE(rs.getInt("id"), rs.getString("author"),
-							rs.getString("title"), rs.getInt("year"), rs.getString("journal"));
-					return entry;
-				}
-			});
-		return entries;
-	}
     
     @Autowired
 	JdbcTemplate jdbcTemplate;
