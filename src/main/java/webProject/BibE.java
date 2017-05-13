@@ -122,6 +122,5 @@ public class BibE {
 		sb.append("\n");
 		
 		return sb;
-    }
-    
+    }    
 }
