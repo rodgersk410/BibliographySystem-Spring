@@ -87,8 +87,8 @@
 					<input type="checkbox" th:name="allCheck" th:id="selectIeeeAll" />
 				</th>
 			</tr>
-			<tr th:each="bibliography : ${IeeeEntries}">
-				<td th:text="${bibliography.searchId}">searchId</td>
+			<tr th:each="bibliography,iter : ${IeeeEntries}">
+				<td th:text="${iter.count}">searchId</td>
 				<td th:text="${bibliography.author}">author</td>
 				<td th:text="${bibliography.title}">title</td>
 				<td th:text="${bibliography.year}">year</td>

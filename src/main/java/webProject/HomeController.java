@@ -53,7 +53,6 @@ public class HomeController {
 	}
 
 	// save edited entry
-	// TODO: Make update more generic
 	@RequestMapping("/saveEntry/{id}")
 	public String saveEntry(@ModelAttribute BibE bib) {
 		dbHelper.updateEntry(bib);
@@ -90,8 +89,6 @@ public class HomeController {
 	}
 
 	// view formatted selected entry
-	// TODO: needs refactoring so that the index number on the entry is in
-	// ascending order
 	@RequestMapping(value = "/modifySelected", params = "action=View Selected in IEEE")
 	public String viewFormattedSelected(@RequestParam(value = "myCheck", required = true) String id,
 			@RequestParam(value = "action", required = true) String action, RedirectAttributes redir) {

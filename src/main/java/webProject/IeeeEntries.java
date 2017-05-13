@@ -68,10 +68,6 @@ public class IeeeEntries {
             e.printStackTrace();  
         }
         
-        //Set temporary id to each result
-        for(int i=0; i < 10; i++)
-        	IeeeEntries.get(i).setSearchId(i+1);
-        
         return IeeeEntries;
 	}
 

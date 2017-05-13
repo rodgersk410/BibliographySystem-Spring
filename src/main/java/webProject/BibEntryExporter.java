@@ -8,7 +8,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-public class BibEntryExporter {
+public class BibEntryExporter implements IBibEntryExporter{
 	
 	public void exportToFile(HttpServletResponse response, List<BibE> entries) throws IOException{
 		

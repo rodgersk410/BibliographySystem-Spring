@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-public class BibEntryImporter {
+public class BibEntryImporter implements IBibEntryImporter {
 	
 	public List<BibE> entryImporter(MultipartFile file) {
 		List<BibE> entryList = new ArrayList<BibE>();

@@ -46,7 +46,6 @@ public class BibE {
 	private String journal;
 	
 	private Integer id;
-	private int searchId;
     
     public BibE(Integer id, String author, String title, Integer year, String journal) {
     	this.author = author;
@@ -83,6 +82,7 @@ public class BibE {
     }
     
     public Integer getYear() {
+    	
         return year;
     }
 
@@ -96,14 +96,6 @@ public class BibE {
 
     public void setJournal(String journal) {
         this.journal = journal;
-    }
-    
-    public int getSearchId() {
-        return searchId;
-    }
-    
-    public void setSearchId(int searchId) {
-    	this.searchId = searchId;
     }
     
     public StringBuffer entryToString() {
@@ -129,7 +121,7 @@ public class BibE {
 		StringBuilder sb = new StringBuilder();
 		String prefix = "";
 		for (Field f : getClass().getDeclaredFields()) {
-			if (!(f.getName().equals("id") || f.getName().equals("searchId"))) {
+			if (!(f.getName().equals("id"))) {
 				sb.append(prefix);
 				prefix = ",";
 				sb.append(f.getName());
@@ -142,13 +134,17 @@ public class BibE {
 		StringBuilder sb = new StringBuilder();
 		String prefix = "";
 		for (Field f : getClass().getDeclaredFields()) {
-			if (!(f.getName().equals("id") || f.getName().equals("searchId"))) {
+			if (!(f.getName().equals("id"))) {
 				sb.append(prefix);
 				prefix = ",";
 				try {
-					sb.append("'");
-					sb.append(f.get(this));
-					sb.append("'");
+					if (f.getType().toString().equals("class java.lang.String")) {
+						sb.append("'");
+						sb.append(f.get(this));
+						sb.append("'");
+					} else {
+						sb.append(f.get(this));
+					}
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -162,15 +158,19 @@ public class BibE {
 		StringBuilder sb = new StringBuilder();
 		String prefix = "";
 		for (Field f : getClass().getDeclaredFields()) {
-			if (!(f.getName().equals("id") || f.getName().equals("searchId"))) {
+			if (!(f.getName().equals("id"))) {
 				sb.append(prefix);
 				prefix = ",";
 				try {
 					sb.append(f.getName());
 					sb.append(" = ");
-					sb.append("'");
-					sb.append(f.get(this));
-					sb.append("'");
+					if (f.getType().toString().equals("class java.lang.String")) {
+						sb.append("'");
+						sb.append(f.get(this));
+						sb.append("'");
+					} else {
+						sb.append(f.get(this));
+					}
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();

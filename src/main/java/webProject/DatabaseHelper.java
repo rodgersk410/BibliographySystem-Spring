@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DatabaseHelper {
+public class DatabaseHelper implements IDataBaseHelper {
 	
 	public List<BibE> getSelectedEntries(String id){
 		String sql = "SELECT * FROM entries where id in (" + id + ")";
@@ -56,7 +56,7 @@ public class DatabaseHelper {
     	jdbcTemplate.update("delete from bibliographies.entries where id in (" + idList + ")");
 	}
     
-    public Boolean isUnique(BibE bib) {
+    private Boolean isUnique(BibE bib) {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		List<BibE> entries = this.jdbcTemplate.query("select * from entries" + 
 				" where author = '" + bib.getAuthor() + 

@@ -112,20 +112,7 @@ public class CitationStyleGenerator {
 		BibTeXEntry bibTeXEntry = new BibTeXEntry(new Key("ARTICLE"), new Key("xxxx"));
 		
 		StringBuffer sb = new StringBuffer();
-
-			sb.append("@article{");
-			sb.append("\n");
-			sb.append("author = {" + bibEntry.getAuthor() + "},");
-			sb.append("\n");
-			sb.append("title = {" + bibEntry.getTitle() + "},");
-			sb.append("\n");
-			sb.append("year = {" + bibEntry.getYear() + "},");
-			sb.append("\n");
-			sb.append("journal = {" + bibEntry.getJournal() + "},");
-			sb.append("\n");
-			sb.append("}");
-			sb.append("\n");
-			sb.append("\n");
+		sb = bibEntry.entryToString();
 		
 		byte[] bytes = sb.toString().getBytes();
 		InputStream is = new ByteArrayInputStream(bytes);
