@@ -1,5 +1,6 @@
 package webProject;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -122,5 +123,60 @@ public class BibE {
 		sb.append("\n");
 		
 		return sb;
-    }    
+    }
+    
+	public String listOfClassFieldNames() {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (Field f : getClass().getDeclaredFields()) {
+			if (!(f.getName().equals("id") || f.getName().equals("searchId"))) {
+				sb.append(prefix);
+				prefix = ",";
+				sb.append(f.getName());
+			}
+		}
+		return sb.toString();
+	}
+    
+	public String listOfObjectValues() {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (Field f : getClass().getDeclaredFields()) {
+			if (!(f.getName().equals("id") || f.getName().equals("searchId"))) {
+				sb.append(prefix);
+				prefix = ",";
+				try {
+					sb.append("'");
+					sb.append(f.get(this));
+					sb.append("'");
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return sb.toString();
+	}
+	
+	public String listOfNameAndValues() {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (Field f : getClass().getDeclaredFields()) {
+			if (!(f.getName().equals("id") || f.getName().equals("searchId"))) {
+				sb.append(prefix);
+				prefix = ",";
+				try {
+					sb.append(f.getName());
+					sb.append(" = ");
+					sb.append("'");
+					sb.append(f.get(this));
+					sb.append("'");
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return sb.toString();
+	}
 }
