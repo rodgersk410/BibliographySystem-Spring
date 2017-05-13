@@ -11,27 +11,25 @@ import javax.servlet.http.HttpServletResponse;
 public class BibEntryExporter {
 	
 	public void exportToFile(HttpServletResponse response, List<BibE> entries) throws IOException{
-		StringBuffer sb = new StringBuffer();
-		for(BibE entry : entries){
-			sb = sb.append(entry.entryToString());
-		}
 		
-		System.out.println(sb.toString());
+		//convert to string
+		StringBuffer sb = new StringBuffer();
+		for(BibE entry : entries)
+			sb = sb.append(entry.entryToString());
 
 		byte[] bytes = sb.toString().getBytes();
 		InputStream is = new ByteArrayInputStream(bytes);
 
+		//move string to bibtex file
 		response.setContentType("application/bibtex");
 		response.setHeader("Content-Disposition", "attachment; filename=" + "BibtexRecords.bib");
 		OutputStream os = response.getOutputStream();
 		byte[] buffer = new byte[1024];
 		int len;
-		while ((len = is.read(buffer)) != -1) {
+		while ((len = is.read(buffer)) != -1)
 			os.write(buffer, 0, len);
-		}
 		os.flush();
 		os.close();
 		is.close();
 	}
-
 }

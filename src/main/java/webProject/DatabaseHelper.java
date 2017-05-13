@@ -5,8 +5,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -39,6 +37,20 @@ public class DatabaseHelper {
 				}
 			});
 		return entries;
+	}
+    
+    public void insertEntry(BibE bib) {
+        jdbcTemplate.update("insert into entries (author, title, year, journal) "
+        		+ "values (?, ?, ?, ?)", bib.getAuthor(), bib.getTitle(), bib.getYear(), bib.getJournal());
+	}
+    
+    public void updateEntry(BibE bib) {
+		jdbcTemplate.update("update entries set author=?, title=?, year=?, journal=? " + "where id = ?",
+				bib.getAuthor(), bib.getTitle(), bib.getYear(), bib.getJournal(), bib.getId());
+	}
+    
+    public void deleteEntries(String idList) {
+    	jdbcTemplate.update("delete from bibliographies.entries where id in (" + idList + ")");
 	}
     
     @Autowired

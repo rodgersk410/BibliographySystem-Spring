@@ -1,26 +1,16 @@
 package webProject;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.springframework.jdbc.core.RowMapper;
-
 import javax.xml.bind.annotation.XmlAccessType;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
 
 @XmlRootElement(name="root")
 @XmlAccessorType(XmlAccessType.FIELD)
 class Root {
-	
 	@XmlElement(name = "document")
 	List<BibE> bibliographies;
 	
@@ -33,7 +23,6 @@ class Root {
 	List<BibE> getBibliographies() {
 		return this.bibliographies;
 	}
-	
 }
 
 @XmlRootElement
@@ -47,19 +36,18 @@ class TotalSearched {}
 public class BibE {
 
 	@XmlElement(name = "authors")
-    private String author;
-	
+    private String author;	
 	@XmlElement(name = "title")
 	private String title;
 	@XmlElement(name = "py")
-	private int year;
+	private Integer year;
 	@XmlElement(name = "publisher")
 	private String journal;
 	
-	private int id;
+	private Integer id;
 	private int searchId;
     
-    public BibE(int id, String author, String title, int year, String journal) {
+    public BibE(Integer id, String author, String title, Integer year, String journal) {
     	this.author = author;
     	this.title = title;
     	this.year = year;
@@ -69,11 +57,11 @@ public class BibE {
     
     public BibE(){}
     
-    public int getId() {
+    public Integer getId() {
         return id;
     }
     
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -93,11 +81,11 @@ public class BibE {
         this.title = title;
     }
     
-    public int getYear() {
+    public Integer getYear() {
         return year;
     }
 
-    public void setYear(int year) {
+    public void setYear(Integer year) {
         this.year = year;
     }
     
@@ -135,6 +123,5 @@ public class BibE {
 		
 		return sb;
     }
-    
     
 }

@@ -25,20 +25,25 @@ public class IeeeEntries {
 		this.IeeeEntries = IeeeEntries;
 	}
 	
-	public List<BibE> retrieveIeeeEntries(String a, String t, String j, String y) {
-		
+	public List<BibE> retrieveIeeeEntries(BibE entry) {
+		String yearString;
 		List<BibE> IeeeEntries = new ArrayList<BibE>();
+		String a = "", t = "", j = "";
+		if(entry.getYear() != null)
+			yearString = entry.getYear().toString();
+		else
+			yearString = "";
 		
     	//Build request url
-    	if(!a.equals(""))
-    		a = "au=" + a;
-    	if(!t.equals(""))
-    		t = "&ti=" + t;
-    	if(!j.equals(""))
-    		j = "&jn=" + j;
-    	if(!y.equals(""))
-    		y = "&py=" + y;
-        String requestUrl = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?" + a + t + j + y + "&hc=10";
+    	if(!entry.getAuthor().equals(""))
+    		a = "au=" + entry.getAuthor();
+    	if(!entry.getTitle().equals(""))
+    		t = "&ti=" + entry.getTitle();
+    	if(!entry.getJournal().equals(""))
+    		j = "&jn=" + entry.getJournal();
+    	if(!yearString.equals(""))
+    		yearString = "&py=" + yearString;
+        String requestUrl = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?" + a + t + j + yearString + "&hc=10";
         
         //Request and get response
         RestTemplate restTemplate = new RestTemplate();
@@ -64,9 +69,8 @@ public class IeeeEntries {
         }
         
         //Set temporary id to each result
-        for(int i=0; i < 10; i++) {
+        for(int i=0; i < 10; i++)
         	IeeeEntries.get(i).setSearchId(i+1);
-        }
         
         return IeeeEntries;
 	}

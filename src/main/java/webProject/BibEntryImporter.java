@@ -27,10 +27,10 @@ public class BibEntryImporter {
 		
         if (file.isEmpty()) {
             System.out.println("file empty");
-            //redirectAttributes.addFlashAttribute("message", "Please select a file to upload");
         }
         else {
         	try {
+        		//parse bibtex file
 				InputStream inputStream =  new BufferedInputStream(file.getInputStream());
 				Reader reader = new InputStreamReader(inputStream);
 				BibTeXParser bibtexParser = new BibTeXParser();
@@ -38,24 +38,21 @@ public class BibEntryImporter {
 				Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
 				Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
 				
+				//map parsed bibtex entries to our model
 				for(BibTeXEntry entry : entries){					
 					Value title = entry.getField(BibTeXEntry.KEY_TITLE);
-					if(title == null){
+					if(title == null)
 						continue;
-					}
 					Value author = entry.getField(BibTeXEntry.KEY_AUTHOR);
-					if(author == null){
+					if(author == null)
 						continue;
-					}
 					Value year = entry.getField(BibTeXEntry.KEY_YEAR);
-					if(year == null){
+					if(year == null)
 						continue;
-					}
 					Value journal = entry.getField(BibTeXEntry.KEY_JOURNAL);
-					if(journal == null){
+					if(journal == null)
 						continue;
-					}
-					
+				
 					BibE be = new BibE();
 					be.setAuthor(author.toUserString());
 					be.setTitle(title.toUserString());
@@ -63,9 +60,6 @@ public class BibEntryImporter {
 					be.setYear(Integer.parseInt(year.toUserString()));
 					
 					entryList.add(be);
-					
-/*			        jdbcTemplate.update("insert into entries (author, title, year, journal) "
-			        		+ "values (?, ?, ?, ?)", sauthor, stitle, iyear, sjournal);*/
 				}
 							
 			} catch (IOException e) {
