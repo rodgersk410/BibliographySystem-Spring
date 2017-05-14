@@ -117,6 +117,9 @@ public class BibE {
 		return sb;
     }
     
+    /*the following functions assist with creating 
+     * insert/update statements to db*/
+    
 	public String listOfClassFieldNames() {
 		StringBuilder sb = new StringBuilder();
 		String prefix = "";

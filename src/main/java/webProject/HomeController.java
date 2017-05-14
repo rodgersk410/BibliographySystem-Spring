@@ -69,11 +69,12 @@ public class HomeController {
 	// import bibtex files
 	@RequestMapping(value = "/uploadFile")
 	public String uploadFile(@RequestParam("file") MultipartFile file) {
+		
 		BibEntryImporter importer = new BibEntryImporter();
 		List<BibE> beList = importer.entryImporter(file);
-
 		for (BibE entry : beList)
 			dbHelper.insertEntry(entry);
+		
 		return "redirect:/biblio";
 	}
 
@@ -82,9 +83,6 @@ public class HomeController {
 	@ResponseBody
 	void exportSelected(HttpServletResponse response, @RequestParam(value = "myCheck", required = true) String id,
 			@RequestParam(value = "action", required = true) String action) throws IOException {
-
-
-
 		
 		List<BibE> entries = dbHelper.getSelectedEntries(id);
 		BibEntryExporter exporter = new BibEntryExporter();
@@ -95,6 +93,7 @@ public class HomeController {
 	@RequestMapping(value = "/modifySelected", params = "action=Delete Selected")
 	public String deleteSelected(@RequestParam(value = "myCheck", required = true) String idList,
 			@RequestParam(value = "action", required = true) String action) {
+		
 		dbHelper.deleteEntries(idList);
 		return "redirect:biblio";
 	}
@@ -103,6 +102,8 @@ public class HomeController {
 	@RequestMapping(value = "/modifySelected", params = "action=View Selected in IEEE")
 	public String viewFormattedSelected(@RequestParam(value = "myCheck", required = true) String id,
 			@RequestParam(value = "action", required = true) String action, RedirectAttributes redir) {
+		
+		//format each entry in Ieee format based on Ieee.csl stylesheet
 		List<BibE> formattedEntries = dbHelper.getSelectedEntries(id);
 		List<String> iEeeFormattedEntries = CitationStyleGenerator.generateCitations(formattedEntries, "ieee.csl",
 				CitationStyleOutputFormat.TEXT);
@@ -117,12 +118,14 @@ public class HomeController {
 	public String searchIeeeDb(@RequestParam(value = "action", required = true) String action, 
 			@ModelAttribute BibE bib, RedirectAttributes redir) {
 		
+		//build Ieee url
 		ApiEntries ieEntries = new ApiEntries();
 		String apiBaseUrl = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?";
 		IApiUrl IeeeApiUrl = new IeNumResults(new IeYearParam(new IeJournalParam(new IeTitleParam
 									(new IeAuthorParam(new ApiUrl(apiBaseUrl, bib))))));
 		String IeeeApiUrlString = IeeeApiUrl.assembleUrl(apiBaseUrl, bib);
 		
+		//get entries from xml
 		searchEntries = ieEntries.retrieveIeeeEntries(bib, IeeeApiUrlString);
 
 		redir.addFlashAttribute("IeeeEntries", searchEntries);
@@ -132,6 +135,8 @@ public class HomeController {
 	// import Ieee records
 	@RequestMapping(value = "/searchIeeeDb", params = "action=Import Selected")
 	public String importIeeeSelected(@RequestParam(value = "myCheck", required = true) String id) {
+		
+		//for each of the selected search entries, import into db
 		List<String> items = Arrays.asList(id.split("\\s*,\\s*"));
 		List<BibE> selectedBiblioEntries = new ArrayList<BibE>();
 
