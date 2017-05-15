@@ -2,7 +2,7 @@ package webProject;
 
 import java.util.List;
 
-public interface IDataBaseHelper {
+public interface IDatabaseHelper {
 	public List<BibE> getSelectedEntries(String id);
 	public List<BibE> getAllEntries();
 	public void insertEntry(BibE bib);
