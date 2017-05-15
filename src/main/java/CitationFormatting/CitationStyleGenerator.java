@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,11 +79,14 @@ public class CitationStyleGenerator {
 			CitationStyleOutputFormat outputFormat) {
 		try {
 			CSLItemData[] cslItemData = new CSLItemData[bibEntries.size()];
+			List<String> bibliographyList = new ArrayList<String>();
 			for (int i = 0; i < bibEntries.size(); i++) {
 				cslItemData[i] = bibEntryToCSLItemData(bibEntries.get(i));
+				Bibliography bibliographyEntry = CSL.makeAdhocBibliography(style, outputFormat.getFormat(), cslItemData[i]);
+				bibliographyList.add(bibliographyEntry.makeString());
 			}
-			Bibliography bibliography = CSL.makeAdhocBibliography(style, outputFormat.getFormat(), cslItemData);
-			return Arrays.asList(bibliography.getEntries());
+			
+			return bibliographyList; 
 
 		} catch (IOException | ArrayIndexOutOfBoundsException e) {
 			LOGGER.error("Could not generate BibEntry citation", e);
@@ -108,20 +112,7 @@ public class CitationStyleGenerator {
 		BibTeXEntry bibTeXEntry = new BibTeXEntry(new Key("ARTICLE"), new Key("xxxx"));
 		
 		StringBuffer sb = new StringBuffer();
-
-			sb.append("@article{");
-			sb.append("\n");
-			sb.append("author = {" + bibEntry.getAuthor() + "},");
-			sb.append("\n");
-			sb.append("title = {" + bibEntry.getTitle() + "},");
-			sb.append("\n");
-			sb.append("year = {" + bibEntry.getYear() + "},");
-			sb.append("\n");
-			sb.append("journal = {" + bibEntry.getJournal() + "},");
-			sb.append("\n");
-			sb.append("}");
-			sb.append("\n");
-			sb.append("\n");
+		sb = bibEntry.entryToString();
 		
 		byte[] bytes = sb.toString().getBytes();
 		InputStream is = new ByteArrayInputStream(bytes);

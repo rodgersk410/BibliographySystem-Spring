@@ -1,26 +1,19 @@
 package webProject;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.springframework.jdbc.core.RowMapper;
-
 import javax.xml.bind.annotation.XmlAccessType;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
-
+/* the following supporting classes are required 
+ * to map the IEEE Api Xml result to the model */
 @XmlRootElement(name="root")
 @XmlAccessorType(XmlAccessType.FIELD)
 class Root {
-	
 	@XmlElement(name = "document")
 	List<BibE> bibliographies;
 	
@@ -33,33 +26,31 @@ class Root {
 	List<BibE> getBibliographies() {
 		return this.bibliographies;
 	}
-	
 }
-
 @XmlRootElement
 class TotalFound {}
-
 @XmlRootElement
 class TotalSearched {}
 
+/*****************************************
+ * This is where the model actually starts 
+ * **************************************/
 @XmlRootElement(name="document")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BibE {
 
 	@XmlElement(name = "authors")
-    private String author;
-	
+    private String author;	
 	@XmlElement(name = "title")
 	private String title;
 	@XmlElement(name = "py")
-	private int year;
+	private Integer year;
 	@XmlElement(name = "publisher")
 	private String journal;
 	
-	private int id;
-	private int searchId;
+	private Integer id;
     
-    public BibE(int id, String author, String title, int year, String journal) {
+    public BibE(Integer id, String author, String title, Integer year, String journal) {
     	this.author = author;
     	this.title = title;
     	this.year = year;
@@ -69,11 +60,11 @@ public class BibE {
     
     public BibE(){}
     
-    public int getId() {
+    public Integer getId() {
         return id;
     }
     
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -93,11 +84,11 @@ public class BibE {
         this.title = title;
     }
     
-    public int getYear() {
+    public Integer getYear() {
         return year;
     }
 
-    public void setYear(int year) {
+    public void setYear(Integer year) {
         this.year = year;
     }
     
@@ -109,13 +100,89 @@ public class BibE {
         this.journal = journal;
     }
     
-    public int getSearchId() {
-        return searchId;
+    //represent model as bibtex string
+    public StringBuffer entryToString() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("@article{");
+		sb.append("\n");
+		sb.append("author = {" + this.getAuthor() + "},");
+		sb.append("\n");
+		sb.append("title = {" + this.getTitle() + "},");
+		sb.append("\n");
+		sb.append("year = {" + this.getYear() + "},");
+		sb.append("\n");
+		sb.append("journal = {" + this.getJournal() + "},");
+		sb.append("\n");
+		sb.append("}");
+		sb.append("\n");
+		sb.append("\n");
+		
+		return sb;
     }
     
-    public void setSearchId(int searchId) {
-    	this.searchId = searchId;
-    }
+    /*the following functions assist with making 
+     * db insert/update statements generic*/
     
+	public String listOfClassFieldNames() {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (Field f : getClass().getDeclaredFields()) {
+			if (!(f.getName().equals("id"))) {
+				sb.append(prefix);
+				prefix = ",";
+				sb.append(f.getName());
+			}
+		}
+		return sb.toString();
+	}
     
+	public String listOfObjectValues() {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (Field f : getClass().getDeclaredFields()) {
+			if (!(f.getName().equals("id"))) {
+				sb.append(prefix);
+				prefix = ",";
+				try {
+					if (f.getType().toString().equals("class java.lang.String")) {
+						sb.append("'");
+						sb.append(f.get(this));
+						sb.append("'");
+					} else {
+						sb.append(f.get(this));
+					}
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return sb.toString();
+	}
+	
+	public String listOfNameAndValues() {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (Field f : getClass().getDeclaredFields()) {
+			if (!(f.getName().equals("id"))) {
+				sb.append(prefix);
+				prefix = ",";
+				try {
+					sb.append(f.getName());
+					sb.append(" = ");
+					if (f.getType().toString().equals("class java.lang.String")) {
+						sb.append("'");
+						sb.append(f.get(this));
+						sb.append("'");
+					} else {
+						sb.append(f.get(this));
+					}
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		return sb.toString();
+	}
 }

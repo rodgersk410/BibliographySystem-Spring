@@ -7,16 +7,15 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script th:inline="javascript">
 		/*<![CDATA[*/
-		
 			$(document).ready(function () {
 				$('#selectAll').click(function(e){
-					var table= $('#myTable');
+					var table= $('#myEntryTable');
 					$('td input:checkbox',table).prop('checked',this.checked);
 				});
 			});
 			
 			$(document).ready(function () {
-				$('#selectAll2').click(function(e){
+				$('#selectIeeeAll').click(function(e){
 					var table= $('#myIeeeTable');
 					$('td input:checkbox',table).prop('checked',this.checked);
 				});
@@ -26,7 +25,7 @@
 			  var input, filter, table, tr, td, i, matchCount;
 			  input = document.getElementById("searchInput");
 			  filter = input.value.toUpperCase();
-			  table = document.getElementById("myTable");
+			  table = document.getElementById("myEntryTable");
 			  tr = table.getElementsByTagName("tr");
 			  numColumns = table.getElementsByTagName("tr")[0].getElementsByTagName("th").length - 1;
 			
@@ -76,7 +75,6 @@
 	  Year <input type="text" name="year"/><br/>
 	  <input type="submit" th:name="action" value="Search Ieee"/>
 	  <input type="submit" th:name="action" value="Import Selected"/>
-	  
 		<table id="myIeeeTable">
 			<tr>
 				<th>No.</th>
@@ -86,22 +84,20 @@
 				<th>journal</th>
 				<th>action</th>
 				<th>
-					<input type="checkbox" th:name="allCheck" th:id="selectAll2" />
+					<input type="checkbox" th:name="allCheck" th:id="selectIeeeAll" />
 				</th>
 			</tr>
-			<tr th:each="bibliography2 : ${IeeeEntries}">
-				<td th:text="${bibliography2.searchId}">searchId</td>
-				<td th:text="${bibliography2.author}">author</td>
-				<td th:text="${bibliography2.title}">title</td>
-				<td th:text="${bibliography2.year}">year</td>
-				<td th:text="${bibliography2.journal}">journal</td>
+			<tr th:each="bibliography,iter : ${IeeeEntries}">
+				<td th:text="${iter.count}">searchId</td>
+				<td th:text="${bibliography.author}">author</td>
+				<td th:text="${bibliography.title}">title</td>
+				<td th:text="${bibliography.year}">year</td>
+				<td th:text="${bibliography.journal}">journal</td>
 				<td>
-					<input type="checkbox" th:id="myCheck" th:name="myCheck" th:value="${bibliography2.searchId}"/>
+					<input type="checkbox" th:id="myCheck" th:name="myCheck" th:value="${iter.count}"/>
 				</td>
 			</tr>
-		</table>
-	  
-	  
+		</table>  
 	</form>
 	<h3>Entries</h3>
 	<input type="text" id="searchInput" onkeyup="searchEntries()" placeholder="Search for names.."/>
@@ -110,17 +106,10 @@
 	    <input type="submit" th:name="action" value="Export Selected"/>
 	    <input type="submit" th:name="action" value="Delete Selected"/>
 	    <input type="submit" th:name="action" value="View Selected in IEEE"/>
-		
 		<p th:each="bibliography : ${formattedEntries}">
-			<span th:text="${#strings.substring(bibliography.author,0,1)} + '. ' + 
-			(${#strings.substringAfter(bibliography.author,' ')} ? 
-				${#strings.substringAfter(bibliography.author,' ')} : '') + ', '">blue</span>
-			<span th:text="(${bibliography.title} ? '&quot;' + ${bibliography.title} + ',&quot; ' : '')">blue</span>
-			<span th:text="(${bibliography.journal} ? ${bibliography.journal} + ', ' : '')" style="font-style:italic">blue</span>
-			<span th:text="(${bibliography.year} ? ${bibliography.year} + '.' : '')">blue</span>
+			<span th:text="${bibliography}">formattedEntry</span>
 		</p>
-		
-		<table id="myTable">
+		<table id="myEntryTable">
 			<tr>
 				<th>id</th>
 				<th>author</th>
