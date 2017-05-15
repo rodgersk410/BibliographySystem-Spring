@@ -126,7 +126,7 @@ public class HomeController {
 		String IeeeApiUrlString = IeeeApiUrl.assembleUrl(apiBaseUrl, bib);
 		
 		//get entries from xml
-		searchEntries = ieEntries.retrieveIeeeEntries(bib, IeeeApiUrlString);
+		searchEntries = ieEntries.retrieveApiEntries(bib, IeeeApiUrlString);
 
 		redir.addFlashAttribute("IeeeEntries", searchEntries);
 		return "redirect:biblio";

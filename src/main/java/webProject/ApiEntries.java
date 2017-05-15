@@ -25,7 +25,7 @@ public class ApiEntries {
 		this.ApiEntries = ApiEntries;
 	}
 	
-	public List<BibE> retrieveIeeeEntries(BibE entry, String ApiUrl) {
+	public List<BibE> retrieveApiEntries(BibE entry, String ApiUrl) {
         
         //Request and get response
         RestTemplate restTemplate = new RestTemplate();

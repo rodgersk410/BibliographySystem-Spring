@@ -9,6 +9,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import javax.xml.bind.annotation.XmlAccessType;
 
+/* the following supporting classes are required 
+ * to map the IEEE Api Xml result to the model */
 @XmlRootElement(name="root")
 @XmlAccessorType(XmlAccessType.FIELD)
 class Root {
@@ -25,13 +27,14 @@ class Root {
 		return this.bibliographies;
 	}
 }
-
 @XmlRootElement
 class TotalFound {}
-
 @XmlRootElement
 class TotalSearched {}
 
+/*****************************************
+ * This is where the model actually starts 
+ * **************************************/
 @XmlRootElement(name="document")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class BibE {
@@ -82,7 +85,6 @@ public class BibE {
     }
     
     public Integer getYear() {
-    	
         return year;
     }
 
@@ -98,6 +100,7 @@ public class BibE {
         this.journal = journal;
     }
     
+    //represent model as bibtex string
     public StringBuffer entryToString() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("@article{");
@@ -117,8 +120,8 @@ public class BibE {
 		return sb;
     }
     
-    /*the following functions assist with creating 
-     * insert/update statements to db*/
+    /*the following functions assist with making 
+     * db insert/update statements generic*/
     
 	public String listOfClassFieldNames() {
 		StringBuilder sb = new StringBuilder();

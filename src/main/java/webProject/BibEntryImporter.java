@@ -59,7 +59,7 @@ public class BibEntryImporter implements IBibEntryImporter {
 					be.setJournal(journal.toUserString());
 					be.setYear(Integer.parseInt(year.toUserString()));
 					
-					entryList.add(be);
+					entryList.add(be);	//add to list of entries
 				}
 							
 			} catch (IOException e) {

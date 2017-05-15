@@ -56,6 +56,7 @@ public class DatabaseHelper implements IDataBaseHelper {
     	jdbcTemplate.update("delete from bibliographies.entries where id in (" + idList + ")");
 	}
     
+    //this method helps to prevent duplicate entries in the system
     private Boolean isUnique(BibE bib) {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		List<BibE> entries = this.jdbcTemplate.query("select * from entries" + 
