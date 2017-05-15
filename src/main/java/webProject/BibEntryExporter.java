@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class BibEntryExporter implements IBibEntryExporter{
 	
+	@Override
 	public void exportToFile(HttpServletResponse response, List<BibE> entries) throws IOException{
 		
 		//convert to string

@@ -34,7 +34,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class HomeController {
 
 	@Autowired
-	private DatabaseHelper dbHelper;
+	private IDatabaseHelper dbHelper;
 
 	// load homepage
 	@RequestMapping("/biblio")
@@ -70,10 +70,14 @@ public class HomeController {
 	@RequestMapping(value = "/uploadFile")
 	public String uploadFile(@RequestParam("file") MultipartFile file) {
 		
-		BibEntryImporter importer = new BibEntryImporter();
-		List<BibE> beList = importer.entryImporter(file);
-		for (BibE entry : beList)
-			dbHelper.insertEntry(entry);
+        if(file.getContentType().equalsIgnoreCase("application/octet-stream")) {
+    		IBibEntryImporter importer = new BibEntryImporter();
+    		List<BibE> beList = importer.entryImporter(file);
+    		for (BibE entry : beList)
+    			dbHelper.insertEntry(entry);
+        }
+        else
+        	System.out.println("Incorrect file format.  Only bibtex import supported");
 		
 		return "redirect:/biblio";
 	}
@@ -85,7 +89,7 @@ public class HomeController {
 			@RequestParam(value = "action", required = true) String action) throws IOException {
 		
 		List<BibE> entries = dbHelper.getSelectedEntries(id);
-		BibEntryExporter exporter = new BibEntryExporter();
+		IBibEntryExporter exporter = new BibEntryExporter();
 		exporter.exportToFile(response, entries);
 	}
 
@@ -119,7 +123,7 @@ public class HomeController {
 			@ModelAttribute BibE bib, RedirectAttributes redir) {
 		
 		//build Ieee url
-		ApiEntries ieEntries = new ApiEntries();
+		IApiEntries ieEntries = new ApiEntries();
 		String apiBaseUrl = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?";
 		IApiUrl IeeeApiUrl = new IeNumResults(new IeYearParam(new IeJournalParam(new IeTitleParam
 									(new IeAuthorParam(new BaseApiUrl(apiBaseUrl, bib))))));
