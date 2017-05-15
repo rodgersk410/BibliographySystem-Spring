@@ -49,7 +49,7 @@ public class DatabaseHelper implements IDataBaseHelper {
     		jdbcTemplate.update("update entries set " + fieldAndValues + "where id = " + bib.getId());
     	}
     	else
-    		System.out.println("Cannot add new entry " + bib.getTitle() + ". Entry already exists.");
+    		System.out.println("Cannot update entry " + bib.getTitle() + ". Entry already exists.");
 	}
     
     public void deleteEntries(String idList) {

@@ -19,13 +19,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import CitationFormatting.CitationStyleGenerator;
 import CitationFormatting.CitationStyleOutputFormat;
-import IeeeApiFetch.ApiUrl;
-import IeeeApiFetch.IApiUrl;
-import IeeeApiFetch.IeAuthorParam;
-import IeeeApiFetch.IeJournalParam;
-import IeeeApiFetch.IeNumResults;
-import IeeeApiFetch.IeTitleParam;
-import IeeeApiFetch.IeYearParam;
+import apiUrlCreator.BaseApiUrl;
+import apiUrlCreator.IApiUrl;
+import apiUrlCreator.IeAuthorParam;
+import apiUrlCreator.IeJournalParam;
+import apiUrlCreator.IeNumResults;
+import apiUrlCreator.IeTitleParam;
+import apiUrlCreator.IeYearParam;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -122,7 +122,7 @@ public class HomeController {
 		ApiEntries ieEntries = new ApiEntries();
 		String apiBaseUrl = "http://ieeexplore.ieee.org/gateway/ipsSearch.jsp?";
 		IApiUrl IeeeApiUrl = new IeNumResults(new IeYearParam(new IeJournalParam(new IeTitleParam
-									(new IeAuthorParam(new ApiUrl(apiBaseUrl, bib))))));
+									(new IeAuthorParam(new BaseApiUrl(apiBaseUrl, bib))))));
 		String IeeeApiUrlString = IeeeApiUrl.assembleUrl(apiBaseUrl, bib);
 		
 		//get entries from xml
