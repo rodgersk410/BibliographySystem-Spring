@@ -1,7 +1,6 @@
 package webProject;
 
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
@@ -14,7 +13,7 @@ import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-public class ApiEntries {
+public class ApiEntries implements IApiEntries {
 	private List<BibE> ApiEntries;
 	public ApiEntries(){}
 	
@@ -25,6 +24,7 @@ public class ApiEntries {
 		this.ApiEntries = ApiEntries;
 	}
 	
+	@Override
 	public List<BibE> retrieveApiEntries(BibE entry, String ApiUrl) {
         
         //Request and get response

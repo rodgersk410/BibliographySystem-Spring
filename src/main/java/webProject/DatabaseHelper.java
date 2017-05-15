@@ -8,8 +8,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DatabaseHelper implements IDataBaseHelper {
+public class DatabaseHelper implements IDatabaseHelper {
 	
+	@Override
 	public List<BibE> getSelectedEntries(String id){
 		String sql = "SELECT * FROM entries where id in (" + id + ")";
 
@@ -20,6 +21,7 @@ public class DatabaseHelper implements IDataBaseHelper {
 		return entries;
 	}
     
+	@Override
     public List<BibE> getAllEntries() {
 		String sql = "SELECT * FROM entries";
 
@@ -30,6 +32,7 @@ public class DatabaseHelper implements IDataBaseHelper {
 		return entries;
 	}
     
+	@Override
     public void insertEntry(BibE bib) {
     	if(this.isUnique(bib))
     	{
@@ -42,6 +45,7 @@ public class DatabaseHelper implements IDataBaseHelper {
     		System.out.println("Cannot add new entry " + bib.getTitle() + ". Entry already exists.");
 	}
     
+	@Override
     public void updateEntry(BibE bib) {
     	if(this.isUnique(bib))
     	{
@@ -52,17 +56,23 @@ public class DatabaseHelper implements IDataBaseHelper {
     		System.out.println("Cannot update entry " + bib.getTitle() + ". Entry already exists.");
 	}
     
+	@Override
     public void deleteEntries(String idList) {
     	jdbcTemplate.update("delete from bibliographies.entries where id in (" + idList + ")");
 	}
     
     //this method helps to prevent duplicate entries in the system
     private Boolean isUnique(BibE bib) {
+		
+		String yearOperator = "= ";
+		if(bib.getYear() == null)
+			yearOperator = "is ";
+		
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		List<BibE> entries = this.jdbcTemplate.query("select * from entries" + 
 				" where author = '" + bib.getAuthor() + 
 				"' and title = '" + bib.getTitle() + 
-				"' and year = " + bib.getYear(),
+				"' and year " + yearOperator + bib.getYear(),
 				new BeanPropertyRowMapper(BibE.class));
 		
 		if(entries.isEmpty())
